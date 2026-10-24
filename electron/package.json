@@ -1,0 +1,16 @@
+{
+  "name": "line-electron-prototype",
+  "version": "0.1.4",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "prepare-extension": "node ../scripts/prepare-electron-extension.cjs",
+    "start": "electron .",
+    "package": "electron-packager . LINE --platform=darwin --arch=arm64 --out=dist --overwrite --ignore=^/dist --ignore=^/evidence --ignore=^/vendor --app-bundle-id=com.local.line-electron-prototype --no-asar && codesign --force --deep --sign - \"dist/LINE-darwin-arm64/LINE.app\""
+  },
+  "devDependencies": {
+    "electron": "44.4.1",
+    "@electron/packager": "20.3.0"
+  },
+  "productName": "LINE"
+}

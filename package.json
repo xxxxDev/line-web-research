@@ -1,0 +1,14 @@
+{
+  "name": "line-web-research",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Research prototype: run the LINE Chrome extension as a local web page or Electron app.",
+  "license": "MIT",
+  "scripts": {
+    "start": "node web/server.cjs",
+    "test": "node --test web/*.test.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,34 @@
+node_modules/
+work/
+electron/dist/
+releases/
+.DS_Store
+
+# Local credentials and runtime state (never commit)
+.env
+.env.*
+!.env.example
+login-vault/
+profile/
+profiles/
+Local Storage/
+Session Storage/
+IndexedDB/
+Cookies
+Cookies-journal
+Login Data
+Login Data-journal
+History
+History-journal
+*.db
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+
+# LINE's own extension files are never committed (see README)
+vendor/
+electron/extension/

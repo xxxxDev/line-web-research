@@ -1,0 +1,43 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+module.exports = async ({ window, root, attempts }) => {
+  const initial = await window.webContents.executeJavaScript(`({saved:localStorage.getItem('line-web-unread-mode'),title:document.title,nodeExposed:typeof require!=='undefined'})`);
+  assert.equal(initial.nodeExposed,false);
+  assert.equal(initial.title.startsWith('[Unread mode]'),initial.saved!=='0');
+  const result = await window.webContents.executeJavaScript(`(async()=>{
+    const fixture=document.createElement('ul');fixture.id='unread-smoke-nav';
+    fixture.innerHTML='<li class="synthetic-item"><button class="synthetic-button" aria-label="Sound setting">Sound</button></li>';
+    document.body.prepend(fixture);await new Promise(r=>setTimeout(r,50));
+    const button=document.getElementById('line-web-unread-toggle');
+    if(!button)throw new Error('Unread toggle missing');
+    const theme=button.closest('li').nextElementSibling;
+    const position=theme?.querySelector('#line-web-theme-toggle')!=null && theme.nextElementSibling?.querySelector('button')?.getAttribute('aria-label')==='Sound setting';
+    if(button.getAttribute('aria-pressed')!=='true')button.click();
+    let focusEvents=0;window.addEventListener('focus',()=>focusEvents++);
+    window.dispatchEvent(new FocusEvent('focus'));
+    const focusBlocked=focusEvents===0 && document.hasFocus()===false;
+    const url='https://line-chrome-gw.line-apps.com/api/talk/thrift/Talk/TalkService/sendChatChecked';
+    const fetchReply=await (await fetch(new Request(url,{method:'POST',body:'synthetic'}))).json();
+    const xhrReply=await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();xhr.open('POST',url);xhr.setRequestHeader('X-Line-Access','synthetic');
+      xhr.onload=()=>resolve(JSON.parse(xhr.responseText));xhr.onerror=()=>reject(new Error('Unread XHR failed'));xhr.send('synthetic');
+    });
+    const normalFetch=await (await fetch('data:application/json,%7B%22normal%22%3Atrue%7D')).json();
+    await chrome.action.setBadgeText({text:'2'});
+    const titleAndBadge=document.title==='[Unread mode] (2) LINE';
+    button.click();
+    window.dispatchEvent(new FocusEvent('focus'));
+    const offRestoresFocus=focusEvents===1;
+    const savedOff=localStorage.getItem('line-web-unread-mode')==='0'&&button.getAttribute('aria-pressed')==='false'&&!document.title.startsWith('[Unread');
+    return {position,focusBlocked,fetchReply,xhrReply,normalFetch:normalFetch.normal,titleAndBadge,offRestoresFocus,savedOff};
+  })()`);
+  for(const flag of ['position','focusBlocked','normalFetch','titleAndBadge','offRestoresFocus','savedOff'])assert.equal(result[flag],true,flag);
+  assert.equal(result.fetchReply.code,0);assert.equal(result.xhrReply.code,0);
+  assert.equal(attempts(),0,'Unread requests reached native network');
+  const offUsesNetwork=await window.webContents.executeJavaScript(`fetch('https://line-chrome-gw.line-apps.com/api/talk/thrift/Talk/TalkService/sendChatChecked',{method:'POST',body:'synthetic'}).then(()=>false,()=>true)`);
+  assert.equal(offUsesNetwork,true);assert.equal(attempts(),1,'Off mode must restore normal networking, blocked only by smoke guard');
+  const evidence={initialSavedChoice:initial.saved,initialDefaultOn:initial.saved===null&&initial.title.startsWith('[Unread mode]'),savedOffRestored:initial.saved==='0'&&!initial.title.startsWith('[Unread'),...result,unreadReceiptNetworkAttempts:0,offModeNetworkAttemptBlockedByTest:true,realAccountTested:false};
+  const directory=path.join(root,'evidence');fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(path.join(directory,'unread-smoke.json'),JSON.stringify(evidence,null,2));
+  console.log('UNREAD SMOKE PASS',JSON.stringify(evidence));
+};
