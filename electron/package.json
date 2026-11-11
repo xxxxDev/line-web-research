@@ -1,6 +1,6 @@
 {
   "name": "line-web-research-electron",
-  "version": "0.1.0",
+  "version": "2026.11.11",
   "private": true,
   "description": "Electron app of line-web-research: runs your own copy of the LINE Chrome extension as a desktop app named XXNE.",
   "license": "MIT",

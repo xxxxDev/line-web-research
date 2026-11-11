@@ -1,7 +1,7 @@
 {
   "name": "line-web-research",
   "private": true,
-  "version": "0.1.0",
+  "version": "2026.11.11",
   "description": "Research prototype: run the LINE Chrome extension as a local web page or Electron app.",
   "license": "MIT",
   "scripts": {
